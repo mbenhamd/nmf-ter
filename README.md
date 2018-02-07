@@ -1,2 +1,2 @@
-# nmf-ter
-Factorisation matricielle non-négative et classification d’images
+# Non-negative matrix factorization and image classification
+

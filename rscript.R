@@ -1,3 +1,9 @@
+install.packages('devtools')
+devtools::install_github('IRkernel/IRkernel')
+# or devtools::install_local('IRkernel-master.tar.gz')
+IRkernel::installspec()  # to register the kernel in the current R installation
+
+
 ## 0. Create and register an MPI cluster
 library(Rmpi)
 library(doMPI)
@@ -16,11 +22,17 @@ library(raster)
 library(imager)
 library(schoolmath)
 library(NMF)
+library(nmfgpu4R)
+library(NbClust)
+library(ggplot2)
+library(factoextra)
 
+Sys.setenv(CUDA="/usr/local/cuda-9.1/")
+Sys.setenv(NMFGPU_ROOT="/usr/local/nmfgpu/") 
+nmfgpu4R.init()
 
 getwd()
 setwd("/home/mbenhamd/Project/nmf-ter/")
-
 
 data = read.csv("matrice-greyscale.csv")
 dim(data)
@@ -28,10 +40,10 @@ test = skmeans(as.matrix(data),k=49)
 testmeans = kmeans(as.matrix(data),centers = 49)
 
 
-qwerty = nmf(as.matrix(data),rank = 49,nrun = 5,H=test$prototypes)
-
-
-blabla = as.matrix(data) 
+# Elbow method
+fviz_nbclust(data, kmeans, method = "wss",verbose = T,k.max = 238) +
+  geom_vline(xintercept = 4, linetype = 2)+
+  labs(subtitle = "Elbow method")
 
 
 show_images = function(data,from=1,to=10){

@@ -16,7 +16,9 @@ import pandas as pd
 from sklearn.metrics import silhouette_score, confusion_matrix,adjusted_rand_score
 from sklearn.preprocessing import scale
 import nimfa
+import warnings
 
+warnings.filterwarnings("ignore")
 
 def getGapStat(data, k, origDisp, nrefs=3):
     refDisps = np.zeros(nrefs)

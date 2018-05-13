@@ -1,42 +1,60 @@
-import logging
-from time import time
-
-from numpy.random import RandomState
-import matplotlib.pyplot as plt
-
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.cluster import MiniBatchKMeans
-from sklearn import decomposition
-
-n_row, n_col = 2, 3
-n_components = n_row * n_col
-image_shape = (64, 64)
-# #############################################################################
-# Load faces data
+import glob
+import random
+import numpy
 from PIL import Image
-import numpy as np
+import nimfa
 from sklearn.decomposition import NMF
 
 
-def image_to_array(filepath):
-    im = Image.open(filepath).convert('L')
-    (width, height) = im.size
-    greyscale_map = list(im.getdata())
-    greyscale_map = np.array(greyscale_map)
-    greyscale_map = greyscale_map.reshape((height, width))
-    return greyscale_map
+def preprocess(V):
+    print("Data preprocessing")
+    V = (V - V.mean()) / numpy.sqrt(numpy.multiply(V, V).mean())
+    V = numpy.maximum(numpy.minimum((V + 0.25) * 0.25, 1), 0)
+    return V
 
 
-# s1 à s40
-# 1 à 10
+def transform(images):
+    X_data = numpy.array([])
+    s = 0
+    for i in images:
+        image = Image.open(i).convert("L")
+        arr = numpy.array(image)
+        arr = arr.reshape(1, 10304)
+        if X_data.any():
+            X_data = numpy.concatenate((X_data, arr), axis=1)
+        else:
+            X_data = arr
 
-im = Image.open("orl_faces/s1/1.pgm")
-im.show()
-test = image_to_array("orl_faces/s1/1.pgm")
-model = NMF(n_components=90, init='nndsvda', tol=5e-3)
-W = model.fit_transform(test)
-H = model.components_
-A = model.inverse_transform(W)
+        if s == 24:
+            break
+        s += 1
+    return X_data
 
-Image.fromarray(A).show()
-print(W)
+
+def compute(V):
+    nmf = nimfa.Nmf(V, seed="random_vcol", rank=5, max_iter=500, sub_iter=10,
+                    inner_sub_iter=10, beta=0.1, min_residuals=1e-8)
+    print("Algorithm: %s\nInitialization: %s\nRank: %d" % (nmf, nmf.seed, nmf.rank))
+    fit = nmf()
+    sparse_w, sparse_h = fit.fit.sparseness()
+    print("""Stats:
+                - iterations: %d
+                - final projected gradients norm: %5.3f
+                - Euclidean distance: %5.3f 
+                - Sparseness basis: %5.3f, mixture: %5.3f""" % (fit.fit.n_iter,
+                                                                fit.distance(),
+                                                                fit.distance(metric='kl'),
+                                                                sparse_w, sparse_h))
+
+
+
+
+images = glob.glob("dataset_exemples/s1/*.pgm")
+random.shuffle(images, random.random)
+
+matrice_Init = transform(images)
+matrice_processed = NMF(matrice_Init)
+W = matrice_processed.components_
+H = matrice_processed.transform()
+
+Image.fromarray(numpy.dot(W,H)).show()

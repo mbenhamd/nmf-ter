@@ -56,6 +56,13 @@ d = as.matrix(as.data.frame(lapply(data, as.numeric)))
 x16_sk_greyscale = fviz_nbclust(t(d), skmeans, k.max=100, method = "silhouette")
 x16_k_greyscale = fviz_nbclust(t(d), kmeans, k.max=100, method = "silhouette")
 
+png('x16_k_greyscale.png',width = 1920, height = 1080)
+plot(x16_k_greyscale)
+dev.off()
+png('x16_sk_greyscale.png',width = 1920, height = 1080)
+plot(x16_sk_greyscale)
+dev.off()
+
 data = read.csv("matrice-binary-16.csv")
 d = as.matrix(as.data.frame(lapply(data, as.numeric)))
 x16_k_binary = fviz_nbclust(t(d), kmeans, k.max=100, method = "silhouette")
@@ -65,6 +72,13 @@ data = read.csv("matrice-greyscale-32.csv")
 d = as.matrix(as.data.frame(lapply(data, as.numeric)))
 x32_k_greyscale = fviz_nbclust(t(d), kmeans, k.max=100, method = "silhouette")
 x32_sk_greyscale = fviz_nbclust(t(d), skmeans, k.max=100, method = "silhouette")
+
+png('x32_k_greyscale.png',width = 1920, height = 1080)
+plot(x32_k_greyscale)
+dev.off()
+png('x32_sk_greyscale.png',width = 1920, height = 1080)
+plot(x32_sk_greyscale)
+dev.off()
 
 data = read.csv("matrice-binary-32.csv")
 d = as.matrix(as.data.frame(lapply(data, as.numeric)))
@@ -77,11 +91,27 @@ test = paste(bouh,var,sep="")
 W=1
 paste("nmf-mu-",47,"-KmeansRandom-W.csv",sep="")
 
+<<<<<<< HEAD
 for (variable in seq(from=47,to=57)) {
   print(variable)
 }
+=======
+data = read.csv("matrice-greyscale-64.csv")
+d = as.matrix(as.data.frame(lapply(data, as.numeric)))
+x64_sk_greyscale = fviz_nbclust(t(d), skmeans, k.max=100, method = "silhouette")
+x64_k_greyscale = fviz_nbclust(t(d), kmeans, k.max=100, method = "silhouette")
 
+png('x64_k_greyscale.png',width = 1920, height = 1080)
+plot(x64_k_greyscale)
+dev.off()
+png('x64_sk_greyscale.png',width = 1920, height = 1080)
+plot(x64_sk_greyscale)
+dev.off()
+>>>>>>> 31341977b7f75f2bbb0574c9adf6b4bbc2b412c5
 
+#Faire une NMG avec gpu pour skmeans anormalement faible
+
+<<<<<<< HEAD
 for (variable in seq(from=47,to=57)) {
   res = nmf(t(d),variable, algorithm="mu", initMethod="K-Means/Random", maxiter=10000)
   write.csv(res$W,file=paste("nmf-mu-",variable,"-KmeansRandom-W.csv",sep=""))
@@ -93,6 +123,50 @@ for (variable in seq(from=47,to=57)) {
 
 
 sparseness(d)
+=======
+data = read.csv("matrice-greyscale-16.csv")
+d = as.matrix(as.data.frame(lapply(data, as.numeric)))
+
+
+res1 <- nmf(t(d), 47:57, method='KL', nrun=1, seed="ica",.options='v4tp8')
+png('nmf-16-greyscale-47-57-KL-ica.png',width = 1920, height = 1080)
+plot(res1)
+dev.off()
+
+res2 <- nmf(t(d), 47:57, method='KL', nrun=1, seed="random",.options='v4tp8')
+png('nmf-16-greyscale-47-57-KL-random.png',width = 1920, height = 1080)
+plot(res2)
+dev.off()
+
+data2 = read.csv("matrice-greyscale-32.csv")
+d2 = as.matrix(as.data.frame(lapply(data2, as.numeric)))
+
+res3 <- nmf(t(d2), 56:72, method='KL', nrun=1, seed="ica",.options='v4tp8')
+png('nmf-32-greyscale-56-72-KL-ica.png',width = 1920, height = 1080)
+plot(res3)
+dev.off()
+
+res4 <- nmf(t(d2), 56:72, method='KL', nrun=1, seed="random",.options='v4tp8')
+png('nmf-32-greyscale-56-72-KL-random.png',width = 1920, height = 1080)
+plot(res4)
+dev.off()
+
+res5 <- nmf(t(d2), 56:72, method='KL', nrun=1, seed="nndsvd",.options='v4tp8')
+png('nmf-32-greyscale-56-72-KL-nndsvd.png',width = 1920, height = 1080)
+plot(res5)
+dev.off()
+
+data64 = read.csv("matrice-greyscale-64.csv")
+d64 = as.matrix(as.data.frame(lapply(data64, as.numeric)))
+x64_k_greyscale = fviz_nbclust(t(d64), kmeans, k.max=256, method = "silhouette")
+x64_sk_greyscale = fviz_nbclust(t(d64), skmeans, k.max=256, method = "silhouette")
+png('x64_k_greyscale.png',width = 1920, height = 1080)
+plot(x64_k_greyscale)
+dev.off()
+png('x64_sk_greyscale.png',width = 1920, height = 1080)
+plot(x64_sk_greyscale)
+dev.off()
+>>>>>>> 31341977b7f75f2bbb0574c9adf6b4bbc2b412c5
 
 
 set.seed(567);

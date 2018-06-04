@@ -1,7 +1,8 @@
-import matplotlib
-matplotlib.use('Agg')
 import nimfa
+import glob
 import os, sys
+import math
+from PIL import Image
 import scipy
 from math import sqrt
 from sklearn.cluster import KMeans
@@ -13,92 +14,73 @@ from spherecluster import SphericalKMeans
 from sklearn.utils import shuffle
 from sklearn import preprocessing
 import pandas as pd
-from sklearn.metrics import silhouette_score, confusion_matrix,adjusted_rand_score
-from sklearn.preprocessing import scale
+from sklearn.metrics import silhouette_score, confusion_matrix, adjusted_rand_score
+from sklearn.preprocessing import scale, Normalizer,normalize
 import nimfa
-import warnings
+from sklearn import metrics
 
-warnings.filterwarnings("ignore")
 
-def getGapStat(data, k, origDisp, nrefs=3):
-    refDisps = np.zeros(nrefs)
-    for i in range(nrefs):
-        # Create new random reference set
-        randomReference = np.random.random_sample(size=data.shape)
+methode = sys.argv[1]
+transpose = int(sys.argv[2])
 
-        # Fit to it
-        km = KMeans(k)
-        km.fit(randomReference)
+labels = np.loadtxt(open("labels-25.csv", "rb"), delimiter=",")
+datas = np.loadtxt(open("matrice-greyscale-25.csv", "rb"), delimiter=",")
 
-        refDisp = km.inertia_
-        refDisps[i] = refDisp
-    gap = np.log(np.mean(refDisps)) - np.log(origDisp)
-    return gap
-
-size = int(sys.argv[1])
-methode = sys.argv[2]
-transpose = int(sys.argv[3])
-gap = True if len(sys.argv) == 4 else False
-
-datas = np.loadtxt(open("matrice-binary-"+str(size)+".csv", "rb"), delimiter=",")
 if transpose == 1:
-	datas = scale(datas).T
+	datas = preprocessing.normalize(datas, norm='l2')
 if transpose == 2:
-	datas = scale(datas)
-if transpose == 3:
-	datas = scale(datas.T)
-if transpose == 4:
 	datas = datas
-if transpose == 5:
-	datas = datas.T
-
-max_range = int((datas.shape[0]*datas.shape[1]) / (datas.shape[0]+datas.shape[1]))
 
 
-elbow = []
-elbow_score = []
+# no knowledgment 
 elbow_inertia = []
 gaps = []
 silhouettes = []
+# score
+adjusted_rank_score = []  #ARI
+normalized_mutual_info_score = [] #NMI equivalent v_measure_score
+adjusted_mutual_info_score = [] #AMI
+mutual_info_score = []
 
-K = range(2,max_range,1)
+
+max_range = 70
+K = range(20,max_range,1)
 
 print("run : ")
 for k in K:
-    print(str(k)+" / "+ str(max_range) +" -- rappel : taille : " +str(size)+" - method : "+str(methode)+" - t :"+str(transpose))
+	print(str(k)+" / "+ str(max_range) +" -- method : "+str(methode)+" - t :"+str(transpose))
 
-    if methode == "kmeans":
-    	kmeanModel = KMeans(n_clusters=k, n_jobs = -1).fit(datas)
-    if methode == "skmeans":
-    	kmeanModel = SphericalKMeans(n_clusters=k).fit(datas)
+	if methode == "kmeans":
+		kmeanModel = KMeans(n_clusters=k, n_jobs = -1).fit(datas)
+	if methode == "skmeans":
+		kmeanModel = SphericalKMeans(n_clusters=k).fit(datas)
 
-    score = kmeanModel.score(datas)
+	elbow_inertia.append(kmeanModel.inertia_)
 
-    elbow_score.append(score)
-    elbow_inertia.append(kmeanModel.inertia_)
 
-    if size < 50:
-    	elbow.append(sum(np.min(cdist(datas, kmeanModel.cluster_centers_, 'euclidean'), axis=1)) / datas.shape[0])
+	cluster_labels = kmeanModel.predict(datas)
+	silhouette_avg = silhouette_score(datas, cluster_labels)
+	silhouettes.append(silhouette_avg)
 
-    if gap:
-	    gap = getGapStat(datas, k, kmeanModel.inertia_)
-	    gaps.append(gap)
 
-    cluster_labels = kmeanModel.predict(datas)
-    silhouette_avg = silhouette_score(datas, cluster_labels)
-    silhouettes.append(silhouette_avg)
+	#adjusted_rand_score
+	adjusted_rank_score.append( metrics.adjusted_rand_score(labels.astype(np.int32), cluster_labels)  )
+	normalized_mutual_info_score.append( metrics.normalized_mutual_info_score(labels.astype(np.int32), cluster_labels) )
+	adjusted_mutual_info_score.append( metrics.adjusted_mutual_info_score(labels.astype(np.int32), cluster_labels) )
+	mutual_info_score.append( metrics.mutual_info_score(labels.astype(np.int32), cluster_labels)  )
 
 
 
-file_name = "-"+str(methode)+"-"+str(size)+"-transpose-"+str(transpose)+".png"
+file_name = "-"+str(methode)+"-transpose-"+str(transpose)+".png"
 
 fig = plt.figure(figsize=(14, 10))
-plt.figure(figsize=(14, 10))
-plt.plot(K, elbow_score, 'bx-')
+plt.plot(K, silhouettes, 'bx-')
+plt.axvline(x=K[silhouettes.index(max(silhouettes))], linestyle='--')
 plt.xlabel('k')
-plt.ylabel('elbow score')
-plt.title('Elbow Score')
-plt.savefig("result/plt-elbow-score"+file_name, dpi=fig.dpi)
+plt.ylabel('silhouettes')
+plt.title('silhouettes')
+plt.savefig("result2/plt-silhouette"+file_name, dpi=fig.dpi)
+
 
 fig = plt.figure(figsize=(14, 10))
 plt.figure(figsize=(14, 10))
@@ -106,30 +88,13 @@ plt.plot(K, elbow_inertia, 'bx-')
 plt.xlabel('k')
 plt.ylabel('elbow inertia')
 plt.title('Elbow Inertia')
-plt.savefig("result/plt-elbow-inertia"+file_name, dpi=fig.dpi)
+plt.savefig("result2/plt-elbow-inertia"+file_name, dpi=fig.dpi)
 
-if size < 50:
-	fig = plt.figure(figsize=(14, 10))
-	plt.figure(figsize=(14, 10))
-	plt.plot(K, elbow, 'bx-')
-	plt.xlabel('k')
-	plt.ylabel('elbow euclidian')
-	plt.title('Elbow euclidian')
-	plt.savefig("result/plt-elbow-eucidian"+file_name, dpi=fig.dpi)
-
-if gap :
-	fig = plt.figure(figsize=(14, 10))
-	plt.figure(figsize=(14, 10))
-	plt.plot(K, gaps, 'bx-')
-	plt.xlabel('k')
-	plt.ylabel('Gaps')
-	plt.title('Gaps')
-	plt.savefig("result/plt-gaps"+file_name, dpi=fig.dpi)
 
 fig = plt.figure(figsize=(14, 10))
-plt.figure(figsize=(14, 10))
-plt.plot(K, silhouettes, 'bx-')
-plt.xlabel('k')
-plt.ylabel('Silhouette')
-plt.title('Silhouette')
-plt.savefig("result/plt-silhouette"+file_name, dpi=fig.dpi)
+plt.plot(K, adjusted_rank_score, '-bx', label='adjusted_rank_score')
+plt.plot(K, normalized_mutual_info_score, '-rx', label='normalized_mutual_info_score')
+plt.plot(K, adjusted_mutual_info_score, '-yx', label='adjusted_mutual_info_score')
+plt.plot(K, mutual_info_score, '-mx', label='mutual_info_score')
+plt.legend(loc='upper left')
+plt.savefig("result2/plt-score"+file_name, dpi=fig.dpi)

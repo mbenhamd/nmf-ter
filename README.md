@@ -18,7 +18,7 @@ Automatic classification or clustering consists of partioning
  of classes k.
 
 ### Keywords
-Unsupervised Learning, Spherical K-means, Scikit-Learn, Nimfa, People-Art Dataset
+Unsupervised Learning, Spherical K-means, Scikit-Learn, Nimfa, Python, R, People-Art Dataset
 
 ## Data Set
 We used this data set from : [People Art](https://github.com/BathVisArtData/PeopleArt) 

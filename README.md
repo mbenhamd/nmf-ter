@@ -24,7 +24,7 @@ Automatic classification or clustering consists of partioning
 We used this data set from : [People Art](https://github.com/BathVisArtData/PeopleArt) 
 
 ## Example 
-###### Explained variance for SepNMF with Spherical K-means using Norm L2.  
+###### Explained variance for SepNMF with Spherical K-means using Norm L2 (rank = [20;70]).  
 
 <p align="center"> 
 <img src="https://github.com/mbenhamd/nmf-ter/blob/master/nmf_result/sepnmf-norm-2-skmeans--EVAR.png?raw=true">
